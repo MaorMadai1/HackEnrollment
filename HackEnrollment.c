@@ -78,6 +78,7 @@ int buildInteger(char c, int num);
 //friendship function name distance declarations:
 int friendFuncNameDistance (void* a, void* b);
 int calculateASCIIDifference(char* str1, char* str2);
+int compareStudents(void* a1,void* a2);
 
 //hackEnrollment functions
 IsraeliQueueError modifyIsraeliQueuesInSystem(EnrollmentSystem sys);
@@ -101,13 +102,6 @@ EnrollmentSystem createEnrollment(FILE* students, FILE* courses, FILE* hackers) 
     sys->studentsArr = createStudentsArr(students);
     sys->hackersArr = updateHackerParams(sys->studentsArr, hackers);
     sys->coursesArr = createCourseArr(courses);
-    /*
-    assert(sys->coursesArr[0]->courseNumber == 456789);
-    assert(sys->coursesArr[0]->size == 4);
-    assert(sys->hackersArr[2]->studentID == 573829410);
-    assert(sys->hackersArr[2]->desiredCourses[1] == 678901);
-    assert(sys->hackersArr[2]->desiredCourses[2] == NON_ID);
-     */
     return sys;
 }
 
@@ -171,10 +165,6 @@ static void copyCourseArr(Course* pasteArr, Course* copyArr, int size) {
     }
 }
 
-
-//test func for hacker params:
-//void printHackerArrays(Student hacker);
-
 //ROY - also builds array of hackers;
 Student* updateHackerParams(Student* studentArr, FILE* hackers) {
     int numOfHackers = 0;
@@ -186,7 +176,7 @@ Student* updateHackerParams(Student* studentArr, FILE* hackers) {
         studentToEdit->desiredCourses = updateArrOfInts(hackers); //getline func included
         studentToEdit->friendIDs = updateArrOfInts(hackers);
         studentToEdit->rivalIDs = updateArrOfInts(hackers);
-        //printHackerArrays(studentToEdit);
+        //printHackerArrays(studentToEdit); --optional debug*** (import func)
     }
     Student* hackersArr = (Student*) malloc((numOfHackers+1) * sizeof(Student)); //builds hackerArr
     if (!hackersArr) {
@@ -200,42 +190,6 @@ Student* updateHackerParams(Student* studentArr, FILE* hackers) {
     free(hackerIDsArr);
     return hackersArr;
 }
-
-/*
-//test function
-void printHackerArrays(Student hacker){
-    printf("hackerID: %d\n", hacker->studentID);
-    int i=0;
-    printf ("course#s: ");
-    if (hacker->desiredCourses!=NULL) {
-        while(hacker->desiredCourses[i] != NON_ID) {
-            printf ("%d ", hacker->desiredCourses[i]);
-            i++;
-        }
-    }
-    i=0;
-    printf("\n");
-    printf("friendIDs: ");
-    if (hacker->friendIDs != NULL) {
-        while (hacker->friendIDs[i] != NON_ID) {
-            printf ("%d ", hacker->friendIDs[i]);
-            i++;
-        }
-        i=0;
-    }
-    printf("\n");
-    printf("rivalIDs: ");
-    if (hacker->rivalIDs != NULL) {
-        while (hacker->rivalIDs[i] != NON_ID) {
-            printf ("%d ", hacker->friendIDs[i]);
-            i++;
-        }
-    }
-    printf("\n");
-    printf("\n");
-}
-*/
-
 
 //ROY - takes courses file and creates array of hackers. Frees old array which is given
 static int* reallocateIntArr(int newInteger, int* oldArr, int numOfInts) {
@@ -499,7 +453,6 @@ void printQueuesIntoFile(EnrollmentSystem sys, FILE* out) { //TODO - printed the
     }
 }
 
-
 static char* updateString(char* str, int *size)
 {
     char* newStr = (char*)malloc(*size+STRING_LEN*sizeof(char));
@@ -638,7 +591,7 @@ EnrollmentSystem readEnrollment(EnrollmentSystem sys, FILE* queues)
             return NULL;
         } //look at this!!
         FriendshipFunction* friendshipFuncArr=(FriendshipFunction*)malloc(sizeof(FriendshipFunction));
-        if (friendshipFuncArr==NULL) {
+        if(friendshipFuncArr==NULL){
             return NULL;
         } //look at this!!!!
         friendshipFuncArr[0]=NULL;
@@ -671,13 +624,17 @@ int friendFuncFile(void* h1,void* s1)
     if (hacker->friendIDs != NULL) {
         for(int i=0; hacker->friendIDs[i]>0 ;i++)
         {
-            if(hacker->friendIDs[i]==studentId){return STUDENTS_FRIENDS_RES;}
+            if(hacker->friendIDs[i]==studentId){
+                return STUDENTS_FRIENDS_RES;
+            }
         }
     }
     if (hacker->rivalIDs != NULL) {
         for(int i=0;hacker->rivalIDs[i]>0;i++)
         {
-            if(hacker->rivalIDs[i]==studentId){return STUDENTS_RIVALS_RES;} //-20
+            if(hacker->rivalIDs[i]==studentId){
+                return STUDENTS_RIVALS_RES;
+            } //-20
         }
     }
     return STUDENTS_STRANGERS_RES;
