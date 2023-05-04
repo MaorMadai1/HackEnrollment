@@ -7,7 +7,7 @@
 #define CHANGE_SIZE true
 #define DONT_CHANGE_SIZE false
 #define NEGATIVE (-1)
-#define INVALID_SIZE (-1)
+#define INVALID_SIZE 0
 
 #define FRIEND 1
 #define RIVAL (-1)
@@ -45,7 +45,8 @@ static int calculateSizeOfFunctionArray(FriendshipFunction* friendshipFunctions)
 }
 
 //Maor
-static int areFriends(Node node_a,Node node_b,FriendshipFunction* friendshipFunction_arr)
+static int areFriends(Node node_a,Node node_b,FriendshipFunction* friendshipFunction_arr,
+                      int friendship_th, int rivalry_th)
 {
     if(node_a == NULL || node_b == NULL){
         return ERROR;
@@ -59,14 +60,13 @@ static int areFriends(Node node_a,Node node_b,FriendshipFunction* friendshipFunc
             return ERROR;
         }
         int result = friendshipFunction_arr[i](node_a->item ,node_b->item); //check if we need to declare res before the loop
-        if (result>FRIEND_QUOTA){ //does it > or >= ???? - need to check!
+        if (result>friendship_th){ //does it > or >= ???? - need to check!
             return FRIEND;
         }
         sum+=result;
     }
-    return (sum < RIVAL_QUOTA*len) ? RIVAL : STRANGER; //rival-if the avg is less than the rival_quota
+    return (sum < rivalry_th*len) ? RIVAL : STRANGER; //rival-if the avg is less than the rival_quota
 }
-
 
 //ROY - counts number of queues to merge
 static int findNumOfQueues(IsraeliQueue* qarr) {
@@ -99,8 +99,6 @@ static FriendshipFunction* mergeFriendshipFunctions (IsraeliQueue* qarr) {
         i++;
     }
     merged_arr[totalSize - 1] = NULL; //note to self - this is last item in array
-    assert (merged_arr[0] == (((qarr[0])->friendshipFunctionArr)[0])); //checking first func in merged_array
-    assert (merged_arr[totalSize - 2] == (((qarr[i-1])->friendshipFunctionArr)[j-1])); //checking last func in merged_array
     return merged_arr;
 }
 
@@ -147,6 +145,16 @@ static int averageArithmeticFriendThreshold (IsraeliQueue* qarr, int num_of_queu
     return average;
 }
 
+int power (int base, int exponent)
+{
+    int result = 1;
+    for(int i=0;i<exponent;i++){
+        result*=base;
+    }
+    return result;
+
+}
+
 //ROY
 static int averageGeometricRivalThreshold (IsraeliQueue* qarr, int num_of_queues) {
     int product = 1;
@@ -157,9 +165,8 @@ static int averageGeometricRivalThreshold (IsraeliQueue* qarr, int num_of_queues
         product *= (NEGATIVE);
     }
     int average_geometric = 0, average_to_the_power = 0;
-    while (average_to_the_power < product) {
-        average_to_the_power = (average_geometric ^ num_of_queues);
-        average_geometric++;
+    while (average_to_the_power <= product) {
+        average_to_the_power = power(++average_geometric,num_of_queues);
     }
     return average_geometric;
 }
@@ -238,6 +245,9 @@ FriendshipFunction* copyFriendFunctionArr(FriendshipFunction* friendshipFunction
 //ROY -create Israeli queue with malloc, without free
 IsraeliQueue IsraeliQueueCreate(FriendshipFunction* friendshipFuncArr, ComparisonFunction comparisonFunction,
                                 int friendThreshold,int rivalThreshold) {
+    if(friendshipFuncArr==NULL||comparisonFunction==NULL){
+        return NULL;
+    }
     IsraeliQueue ptr = (IsraeliQueue) malloc(sizeof(*ptr));
     if(!ptr) {
         return NULL;
@@ -280,6 +290,9 @@ void IsraeliQueueDestroy(IsraeliQueue q) {
 
 //ROY - adds friendship function to array
 IsraeliQueueError IsraeliQueueAddFriendshipMeasure(IsraeliQueue q, FriendshipFunction friendshipFunction) {
+    if(friendshipFunction==NULL){
+        return ISRAELIQUEUE_BAD_PARAM;
+    }
     FriendshipFunction* temp_array = copyFriendFunctionArr(q->friendshipFunctionArr, CHANGE_SIZE, friendshipFunction);
     if (!(temp_array)) {
         return ISRAELIQUEUE_ALLOC_FAILED;
@@ -312,7 +325,7 @@ IsraeliQueueError IsraeliQueueUpdateRivalryThreshold(IsraeliQueue q, int rivalTh
 //ROY - counts nodes in queue
 int IsraeliQueueSize(IsraeliQueue q) {
     if (!q) {
-        return INVALID_SIZE;
+        return INVALID_SIZE; //set to 0, should be -1?
     }
     int counter = 0;
     Node current = (q->head);
@@ -422,8 +435,9 @@ static void findPlaceInQueue(Node newNode,IsraeliQueue queue) {
     Node s = queue->head;
     Node friendNode = NULL;
     while (s != NULL) {
-        int result = areFriends(newNode,s,queue->friendshipFunctionArr);
-        if (result == FRIEND && s->friend_counter < FRIEND_QUOTA && friendNode==NULL) {
+        int result = areFriends(newNode,s,queue->friendshipFunctionArr,
+                                queue->friendshipThreshold,queue->rivalryThreshold);
+        if(result == FRIEND && s->friend_counter < FRIEND_QUOTA && friendNode==NULL) {
             friendNode = s;
         }
         else if(result == RIVAL && s->rival_counter < RIVAL_QUOTA && friendNode!=NULL){
@@ -463,7 +477,7 @@ void* IsraeliQueueDequeue(IsraeliQueue queue)
     else {
         Node toDelete = queue->head; //we checked it is not null before
         queue->head = queue->head->next;
-        if (queue->head != NULL) { //don't update after destroying the queue b/c head is NULL
+        if (queue->head != NULL) {
             queue->head->prev = NULL;
         }
         else {
