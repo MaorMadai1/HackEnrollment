@@ -125,7 +125,7 @@ Course createCourse(FILE* courses) {
         return NULL;
     }
     friendshipFuncArr[0]=NULL;
-    newCourse->queue = IsraeliQueueCreate(friendshipFuncArr, NULL, DEFAULT_THRESHOLD, DEFAULT_THRESHOLD);
+    newCourse->queue = IsraeliQueueCreate(friendshipFuncArr, compareStudents, DEFAULT_THRESHOLD, DEFAULT_THRESHOLD);
     free(friendshipFuncArr);
     return newCourse;
 }
@@ -388,8 +388,8 @@ Student checkPlacementOfHackers(EnrollmentSystem sys) {
         while (currentCourse) {
             IsraeliQueue clonedQueue = IsraeliQueueClone(currentCourse->queue);
             int place = getPlaceInQueue(clonedQueue, currentHacker);
-            assert(place > 0);
             IsraeliQueueDestroy(clonedQueue);
+            assert(place > 0);
             if (place < currentCourse->size) {
                 successfulRegistrations++;
             }
@@ -429,9 +429,15 @@ void printQueuesIntoFile(EnrollmentSystem sys, FILE* out) { //TODO - printed the
     int i=0; //course index
     Course currentCourse = sys->coursesArr[i];
     while (currentCourse) {
-        fprintf(out, "%d", currentCourse->courseNumber);
         IsraeliQueue clonedQueue = IsraeliQueueClone(currentCourse->queue);
         Student nextInLine = IsraeliQueueDequeue(clonedQueue);
+        if (nextInLine==NULL){
+            IsraeliQueueDestroy(clonedQueue);
+            i++;
+            currentCourse = sys->coursesArr[i];
+            continue;
+        }
+        fprintf(out, "%d", currentCourse->courseNumber);
         while (nextInLine) {
             //print # digits of IDs
             if (nextInLine->studentID < ENOUGH_DIGITS) {
@@ -600,7 +606,7 @@ EnrollmentSystem readEnrollment(EnrollmentSystem sys, FILE* queues)
         free(friendshipFuncArr);
         int* courseStudentsIDs = updateArrOfInts(queues);
         if (courseStudentsIDs==NULL) {
-            break;
+            continue;
         }
         for(int i =0;courseStudentsIDs[i]>0;i++) {
             Student s = searchStudent(sys->studentsArr, courseStudentsIDs[i]);
@@ -672,6 +678,7 @@ void destroyCoursesArr(Course* coursesArr) {
     }
     //free(coursesArr[i]); //note - no need to free NULL object
     free(coursesArr); //TODO - not sure - do we need it?
+
 }
 
 void destroyStudentsArr(Student* studentArr) {
