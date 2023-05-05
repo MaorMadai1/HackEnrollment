@@ -125,7 +125,7 @@ Course createCourse(FILE* courses) {
         return NULL;
     }
     friendshipFuncArr[0]=NULL;
-    newCourse->queue = IsraeliQueueCreate(friendshipFuncArr, NULL, DEFAULT_THRESHOLD, DEFAULT_THRESHOLD);
+    newCourse->queue = IsraeliQueueCreate(friendshipFuncArr, compareStudents, DEFAULT_THRESHOLD, DEFAULT_THRESHOLD);
     free(friendshipFuncArr);
     return newCourse;
 }
@@ -170,7 +170,8 @@ Student* updateHackerParams(Student* studentArr, FILE* hackers) {
     int numOfHackers = 0;
     int hackerID = 0;
     int* hackerIDsArr = NULL;
-    while (fscanf(hackers, " %d ", &hackerID) == 1) {
+    char c = ZERO_CHAR;
+    while (fscanf(hackers, "%d%c", &hackerID,&c) == 2) {
         hackerIDsArr = reallocateIntArr(hackerID, hackerIDsArr, ++numOfHackers);
         Student studentToEdit = searchStudent(studentArr, hackerID); //needs NULL-terminated studentArr
         studentToEdit->desiredCourses = updateArrOfInts(hackers); //getline func included
@@ -235,8 +236,8 @@ static Student searchStudent(Student* studentArr, int hackerID) {
 int* updateArrOfInts(FILE* file) {
     int* paramArr = NULL;
     int sizeOfArr = 0;
-    char transition;
-    int num;
+    char transition = ZERO_CHAR;
+    int num = 0;
     while (fscanf(file, "%c", &transition) == 1) {  //try fgetc
         if (transition == MOVE_ROW_DOWN) { //take care of situation with empty row
             break;
@@ -351,13 +352,16 @@ IsraeliQueueError modifyIsraeliQueuesInSystem(EnrollmentSystem sys) {
 //ROY - enqueues all hackers (in the order in hackers file) into desired courses' queues and returns success/error
 IsraeliQueueError enqueueHackers(EnrollmentSystem sys) {
     int i=0; //hacker index
-    Student currentHacker = sys->hackersArr[i];
-    while (currentHacker) {
+    while (sys->hackersArr[i]) {
         int j=0; //desired course index
-        int* courseNumArr = currentHacker->desiredCourses;
+        int* courseNumArr = sys->hackersArr[i]->desiredCourses;
+        if(courseNumArr == NULL){
+            i++;
+            break;
+        }
         Course currentCourse = searchCourse(sys->coursesArr, courseNumArr[j]);
         while (currentCourse) {
-            IsraeliQueueError hackerEnqueueStatus = IsraeliQueueEnqueue(currentCourse->queue, currentHacker);
+            IsraeliQueueError hackerEnqueueStatus = IsraeliQueueEnqueue(currentCourse->queue, sys->hackersArr[i]);
             if (hackerEnqueueStatus != ISRAELIQUEUE_SUCCESS) {
                 return hackerEnqueueStatus;
             }
@@ -365,7 +369,6 @@ IsraeliQueueError enqueueHackers(EnrollmentSystem sys) {
             currentCourse = searchCourse(sys->coursesArr, courseNumArr[j]);
         }
         i++;
-        currentHacker = sys->hackersArr[i];
     }
     return ISRAELIQUEUE_SUCCESS;
 }
@@ -382,7 +385,7 @@ Student checkPlacementOfHackers(EnrollmentSystem sys) {
         if (courseNumArr == NULL) { //hacker didn't ask for courses -> happy
             i++;
             currentHacker = sys->hackersArr[i];
-            break;
+            continue;
         }
         Course currentCourse = searchCourse(sys->coursesArr, courseNumArr[j]);
         while (currentCourse) {
@@ -429,9 +432,15 @@ void printQueuesIntoFile(EnrollmentSystem sys, FILE* out) { //TODO - printed the
     int i=0; //course index
     Course currentCourse = sys->coursesArr[i];
     while (currentCourse) {
-        fprintf(out, "%d", currentCourse->courseNumber);
         IsraeliQueue clonedQueue = IsraeliQueueClone(currentCourse->queue);
         Student nextInLine = IsraeliQueueDequeue(clonedQueue);
+        if(nextInLine==NULL){
+            IsraeliQueueDestroy(clonedQueue);
+            i++;
+            currentCourse = sys->coursesArr[i];
+            continue;
+        }
+        fprintf(out, "%d", currentCourse->courseNumber);
         while (nextInLine) {
             //print # digits of IDs
             if (nextInLine->studentID < ENOUGH_DIGITS) {
@@ -600,7 +609,7 @@ EnrollmentSystem readEnrollment(EnrollmentSystem sys, FILE* queues)
         free(friendshipFuncArr);
         int* courseStudentsIDs = updateArrOfInts(queues);
         if (courseStudentsIDs==NULL) {
-            break;
+            continue;
         }
         for(int i =0;courseStudentsIDs[i]>0;i++) {
             Student s = searchStudent(sys->studentsArr, courseStudentsIDs[i]);
