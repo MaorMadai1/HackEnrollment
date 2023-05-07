@@ -425,7 +425,6 @@ static int getPlaceInQueue(IsraeliQueue q, Student s) {
 
 //ROY - prints new queues into out file (in the order in courses file)
 void printQueuesIntoFile(EnrollmentSystem sys, FILE* out) { //TODO - printed the first and second hackers twice in queue
-    //157398427 681503298 681503298 825310971 825310971 573829410 827549364
     int i=0; //course index
     Course currentCourse = sys->coursesArr[i];
     while (currentCourse) {
