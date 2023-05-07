@@ -27,9 +27,9 @@
 #define MIN_SUCCESSFUL_REGISTRATIONS 2
 #define END_STR '\0'
 #define NEGATIVE_SIGN '-'
-#define ENOUGH_DIGITS 100000000
+//#define ENOUGH_DIGITS 100000000
 
-typedef struct student {
+struct student {
     int studentID;
     int totalCredits;
     double gpa;
@@ -40,19 +40,19 @@ typedef struct student {
     int* desiredCourses;
     int* friendIDs;
     int* rivalIDs;
-} *Student;
+};
 
-typedef struct course {
+struct course {
     int courseNumber;
     int size;
     IsraeliQueue queue;
-} * Course;
+};
 
-typedef struct EnrollmentSys_t {
+struct EnrollmentSys_t {
     Student* studentsArr;
     Student* hackersArr;
     Course* coursesArr;
-} * EnrollmentSystem;
+};
 
 
 //MAOR funcs:
@@ -357,7 +357,7 @@ IsraeliQueueError enqueueHackers(EnrollmentSystem sys) {
         int* courseNumArr = sys->hackersArr[i]->desiredCourses;
         if(courseNumArr == NULL){
             i++;
-            break;
+            continue;
         }
         Course currentCourse = searchCourse(sys->coursesArr, courseNumArr[j]);
         while (currentCourse) {
@@ -600,26 +600,18 @@ EnrollmentSystem readEnrollment(EnrollmentSystem sys, FILE* queues)
         if(sys_course==NULL) {
             return NULL;
         } //look at this!!
-        FriendshipFunction* friendshipFuncArr=(FriendshipFunction*)malloc(sizeof(FriendshipFunction));
-        if(friendshipFuncArr==NULL){
-            return NULL;
-        } //look at this!!!!
-        friendshipFuncArr[0]=NULL;
-        IsraeliQueue courseQueue = IsraeliQueueCreate(friendshipFuncArr,compareStudents,
-                                                      STUDENTS_FRIENDS_THRESHOLD,STUDENTS_RIVALS_THRESHOLD);
-        free(friendshipFuncArr);
+
         int* courseStudentsIDs = updateArrOfInts(queues);
         if (courseStudentsIDs==NULL) {
             continue;
         }
         for(int i =0;courseStudentsIDs[i]>0;i++) {
             Student s = searchStudent(sys->studentsArr, courseStudentsIDs[i]);
-            IsraeliQueueError error = IsraeliQueueEnqueue(courseQueue, s);
+            IsraeliQueueError error = IsraeliQueueEnqueue(sys_course->queue, s);
             if (error != ISRAELIQUEUE_SUCCESS) {
                 free(courseStudentsIDs);
                 return NULL;
             }
-            sys_course->queue=courseQueue; //queue of course
         }
         free(courseStudentsIDs);
     }
