@@ -29,7 +29,7 @@
 #define NEGATIVE_SIGN '-'
 #define ENOUGH_DIGITS 100000000
 
-typedef struct student {
+ struct student {
     int studentID;
     int totalCredits;
     double gpa;
@@ -40,19 +40,19 @@ typedef struct student {
     int* desiredCourses;
     int* friendIDs;
     int* rivalIDs;
-} *Student;
+};
 
-typedef struct course {
+struct course {
     int courseNumber;
     int size;
     IsraeliQueue queue;
-} * Course;
+};
 
-typedef struct EnrollmentSys_t {
+struct EnrollmentSys_t {
     Student* studentsArr;
     Student* hackersArr;
     Course* coursesArr;
-} * EnrollmentSystem;
+};
 
 
 //MAOR funcs:
@@ -357,7 +357,7 @@ IsraeliQueueError enqueueHackers(EnrollmentSystem sys) {
         int* courseNumArr = sys->hackersArr[i]->desiredCourses;
         if(courseNumArr == NULL){
             i++;
-            break;
+            continue;
         }
         Course currentCourse = searchCourse(sys->coursesArr, courseNumArr[j]);
         while (currentCourse) {
