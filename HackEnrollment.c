@@ -14,11 +14,11 @@
 #define STUDENTS_RIVALS_RES (-20)
 #define STUDENTS_STRANGERS_RES 0
 #define TO_LOWER_DIFF ('a'-'A')
-//newest
+//
 #define DEFAULT_THRESHOLD 0
 #define NUM_OF_COURSE_PARAMS 2
 #define MOVE_ROW_DOWN '\n'
-#define NON_ID (-2147483600)   //(-1) courses can be negative
+#define NON_ID (-2147483600)   //used to be (-1) until announcement that courses can be negative
 #define ZERO_CHAR '0'
 #define ADD_DECIMAL_PLACE 10
 #define SPACE_BETWEEN_INTS ' '
@@ -439,6 +439,7 @@ void printQueuesIntoFile(EnrollmentSystem sys, FILE* out) { //TODO - printed the
         }
         fprintf(out, "%d", currentCourse->courseNumber);
         while (nextInLine) {
+            /* --note: print zeros to fill digit places:
             //print # digits of IDs
             if (nextInLine->studentID < ENOUGH_DIGITS) {
                 fprintf(out, " ");
@@ -447,9 +448,10 @@ void printQueuesIntoFile(EnrollmentSystem sys, FILE* out) { //TODO - printed the
                 }
                 fprintf(out, "%d", nextInLine->studentID);
             } //end treatment of small-valued IDs
-            else {
-                fprintf(out, " %d", nextInLine->studentID);
-            }
+            */
+            //else {
+            fprintf(out, " %d", nextInLine->studentID);
+            //}
             nextInLine = IsraeliQueueDequeue(clonedQueue);
         }
         IsraeliQueueDestroy(clonedQueue);
