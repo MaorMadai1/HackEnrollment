@@ -268,22 +268,6 @@ void IsraeliQueueDestroy(IsraeliQueue q) {
         void* trash_item = IsraeliQueueDequeue(q);
         assert (trash_item != NULL || trash_item == NULL); //TODO - is it okay not to use variable?
     }
-    /* in order not to do anything:
-    if (!trash_item) {
-        continue:
-    }
-    else {
-        *(trash_item)++; //make sure not largest integer??
-    }
-    *(trash_item)--;
-    */
-    /*
-    while (q->head) {
-        Node toDelete = (q->head);
-        (q->head) = (toDelete->next);
-        free(toDelete);
-    }
-    */
     free(q->friendshipFunctionArr); //free func array which is a copy of array given by user
     free(q);
 }
@@ -472,8 +456,9 @@ IsraeliQueueError IsraeliQueueEnqueue(IsraeliQueue queue, void* item)
 //Maor
 void* IsraeliQueueDequeue(IsraeliQueue queue)
 {
-    if (queue == NULL || queue->head == NULL)
+    if (queue == NULL || queue->head == NULL) {
         return NULL;
+    }
     else {
         Node toDelete = queue->head; //we checked it is not null before
         queue->head = queue->head->next;

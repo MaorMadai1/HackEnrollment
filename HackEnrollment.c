@@ -391,8 +391,8 @@ Student checkPlacementOfHackers(EnrollmentSystem sys) {
         while (currentCourse) {
             IsraeliQueue clonedQueue = IsraeliQueueClone(currentCourse->queue);
             int place = getPlaceInQueue(clonedQueue, currentHacker);
-            assert(place > 0);
             IsraeliQueueDestroy(clonedQueue);
+            assert(place > 0);
             if (place < currentCourse->size) {
                 successfulRegistrations++;
             }
