@@ -269,8 +269,8 @@ void IsraeliQueueDestroy(IsraeliQueue q) {
     }
     while (q->head) {
         void* trash_item = IsraeliQueueDequeue(q);
-        if(trash_item != NULL) {
-            trash_item = NULL;
+        if(trash_item == NULL) {
+            free(trash_item);
         }
     }
     free(q->friendshipFunctionArr); //free func array which is a copy of array given by user

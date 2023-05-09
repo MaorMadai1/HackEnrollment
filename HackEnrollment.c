@@ -14,18 +14,18 @@
 #define TO_LOWER_DIFF ('a'-'A')
 #define HACKER_PARAMS 2
 //
-#define DEFAULT_THRESHOLD 0
+#define DEFAULT_FRIEND_THRESHOLD 20
+#define DEFAULT_RIVAL_THRESHOLD 0
 #define NUM_OF_COURSE_PARAMS 2
 #define MOVE_ROW_DOWN '\n'
-#define NON_ID (-2147483600)   //used to be (-1) until announcement that courses can be negative
+#define NON_ID (-1)   //used to be (-1) until announcement that courses can be negative
 #define ZERO_CHAR '0'
-#define ADD_DECIMAL_PLACE 10
+#define ID_SIZE 100000000
 #define SPACE_BETWEEN_INTS ' '
 #define NEGATIVE (-1) //note: already defined in israeliqueue.c
 #define NUM_OF_NEW_FUNCTIONS 3 //num of new friendship functions added to queues
 #define MIN_SUCCESSFUL_REGISTRATIONS 2
 #define END_STR '\0'
-#define NEGATIVE_SIGN '-'
 
 struct student {
     int studentID;
@@ -123,7 +123,7 @@ Course createCourse(FILE* courses) {
         return NULL;
     }
     friendshipFuncArr[0]=NULL;
-    newCourse->queue = IsraeliQueueCreate(friendshipFuncArr, compareStudents, DEFAULT_THRESHOLD, DEFAULT_THRESHOLD);
+    newCourse->queue = IsraeliQueueCreate(friendshipFuncArr, compareStudents, DEFAULT_FRIEND_THRESHOLD, DEFAULT_RIVAL_THRESHOLD);
     free(friendshipFuncArr);
     return newCourse;
 }
@@ -254,15 +254,8 @@ int* updateArrOfInts(FILE* file) {
 
 //ROY - adds digit char as first digit of new integer
 int buildInteger(char c, int num) {
-    int multiply = 1;
-    while (multiply < num) {
-        multiply *= ADD_DECIMAL_PLACE;
-    }
-    if (c == NEGATIVE_SIGN) {
-        return (num * NEGATIVE);
-    }
     int firstDigit = (c - ZERO_CHAR);
-    return (firstDigit*(multiply) + num);
+    return (firstDigit*(ID_SIZE) + num);
 }
 
 
@@ -390,7 +383,7 @@ Student checkPlacementOfHackers(EnrollmentSystem sys) {
             IsraeliQueue clonedQueue = IsraeliQueueClone(currentCourse->queue);
             int place = getPlaceInQueue(clonedQueue, currentHacker);
             IsraeliQueueDestroy(clonedQueue);
-            assert(place > 0);
+            assert(place >= 0);
             if (place < currentCourse->size) {
                 successfulRegistrations++;
             }
@@ -417,7 +410,7 @@ static int getPlaceInQueue(IsraeliQueue q, Student s) {
     if (!q) {
         return 0;
     }
-    int place=1;
+    int place=0;
     while ((Student)IsraeliQueueDequeue(q) != s) { //q->compare("dequeued item", hacker)
         place++;
     }
@@ -439,19 +432,7 @@ void printQueuesIntoFile(EnrollmentSystem sys, FILE* out) { //TODO - printed the
         }
         fprintf(out, "%d", currentCourse->courseNumber);
         while (nextInLine) {
-            /* --note: print zeros to fill digit places:
-            //print # digits of IDs
-            if (nextInLine->studentID < ENOUGH_DIGITS) {
-                fprintf(out, " ");
-                for (int j=1; j*(nextInLine->studentID) < ENOUGH_DIGITS; j*=ADD_DECIMAL_PLACE) {
-                    fprintf(out, "%d", 0);
-                }
-                fprintf(out, "%d", nextInLine->studentID);
-            } //end treatment of small-valued IDs
-            */
-            //else {
             fprintf(out, " %d", nextInLine->studentID);
-            //}
             nextInLine = IsraeliQueueDequeue(clonedQueue);
         }
         IsraeliQueueDestroy(clonedQueue);
