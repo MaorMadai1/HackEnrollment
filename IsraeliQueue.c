@@ -269,10 +269,9 @@ void IsraeliQueueDestroy(IsraeliQueue q) {
     }
     while (q->head) {
         void* trash_item = IsraeliQueueDequeue(q);
-        if (trash_item!=NULL) { //trash code
-            trash_item==NULL;
+        if(trash_item != NULL) {
+            trash_item = NULL;
         }
-        //assert (trash_item != NULL || trash_item == NULL); //TODO - is it okay not to use variable?
     }
     free(q->friendshipFunctionArr); //free func array which is a copy of array given by user
     free(q);
