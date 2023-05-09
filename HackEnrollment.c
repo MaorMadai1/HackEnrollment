@@ -20,6 +20,7 @@
 #define MOVE_ROW_DOWN '\n'
 #define NON_ID (-1)   //used to be (-1) until announcement that courses can be negative
 #define ZERO_CHAR '0'
+#define NEGATIVE_SIGN '-'
 #define ID_SIZE 100000000
 #define SPACE_BETWEEN_INTS ' '
 #define NEGATIVE (-1) //note: already defined in israeliqueue.c
@@ -71,7 +72,6 @@ static int* reallocateIntArr(int newInteger, int* oldArr, int numOfInts);
 static void copyIntArr(int* pasteArr, int* copyArr, int size);
 static Student searchStudent(Student* studentArr, int hackerID);
 int* updateArrOfInts(FILE* file);
-int buildInteger(char c, int num);
 
 //friendship function name distance declarations:
 int friendFuncNameDistance (void* a, void* b);
@@ -235,29 +235,39 @@ int* updateArrOfInts(FILE* file) {
     int* paramArr = NULL;
     int sizeOfArr = 0;
     char transition = ZERO_CHAR;
-    int num = 0;
-    while (fscanf(file, "%c", &transition) == 1) {  //try fgetc
+    while (fscanf(file, "%c", &transition) == 1) {
+        bool negativeFlag = false;
+        int num = 0;
         if (transition == MOVE_ROW_DOWN) { //take care of situation with empty row
             break;
         }
         else if (transition == SPACE_BETWEEN_INTS) {
             continue;
         }
-        if (fscanf(file, " %d", &num) != 1) { //take in integer and the char after it - ' ' or '\n' //used to be fscanf(file, " %d%c", &num, &transition) != 2
+        else if (transition == NEGATIVE_SIGN) {
+            negativeFlag = true;
+        }
+        if (!negativeFlag) {
+            num = transition - ZERO_CHAR;
+        }
+        if (fscanf(file, "%c", &transition)!= 1){
             return NULL;
         }
+        while ((transition!= SPACE_BETWEEN_INTS) && (transition!= MOVE_ROW_DOWN)) {
+            num = num*10 + (transition - ZERO_CHAR);
+            if (fscanf(file, "%c", &transition)!= 1) {
+                return NULL;
+            }
+        }
         sizeOfArr++;
-        paramArr = reallocateIntArr(buildInteger(transition, num), paramArr , sizeOfArr);
+        num = negativeFlag ? NEGATIVE*num : num;
+        paramArr = reallocateIntArr(num, paramArr , sizeOfArr);
+        if (transition == MOVE_ROW_DOWN) { //take care last char in row, again
+            break;
+        }
     }
     return paramArr;
 }
-
-//ROY - adds digit char as first digit of new integer
-int buildInteger(char c, int num) {
-    int firstDigit = (c - ZERO_CHAR);
-    return (firstDigit*(ID_SIZE) + num);
-}
-
 
 //ROY - friendship function that returns absolute value of the difference in name ascii values
 int friendFuncNameDistance (void* a, void* b) {
