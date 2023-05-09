@@ -8,8 +8,6 @@
 #define STRING_LEN 5
 #define STUDENTS_SIZE 30
 #define NUM_OF_STRING_PARAM 3
-#define STUDENTS_FRIENDS_THRESHOLD 20
-#define STUDENTS_RIVALS_THRESHOLD 0
 #define STUDENTS_FRIENDS_RES 20
 #define STUDENTS_RIVALS_RES (-20)
 #define STUDENTS_STRANGERS_RES 0
@@ -27,7 +25,6 @@
 #define MIN_SUCCESSFUL_REGISTRATIONS 2
 #define END_STR '\0'
 #define NEGATIVE_SIGN '-'
-#define ENOUGH_DIGITS 100000000
 
  struct student {
     int studentID;
@@ -171,7 +168,7 @@ Student* updateHackerParams(Student* studentArr, FILE* hackers) {
     int hackerID = 0;
     int* hackerIDsArr = NULL;
     char c = ZERO_CHAR;
-    while (fscanf(hackers, "%d%c", &hackerID,&c) == 2) {
+    while (fscanf(hackers, "%d%c", &hackerID ,&c) == 2) {
         hackerIDsArr = reallocateIntArr(hackerID, hackerIDsArr, ++numOfHackers);
         Student studentToEdit = searchStudent(studentArr, hackerID); //needs NULL-terminated studentArr
         studentToEdit->desiredCourses = updateArrOfInts(hackers); //getline func included
@@ -201,9 +198,9 @@ static int* reallocateIntArr(int newInteger, int* oldArr, int numOfInts) {
         }
         return NULL;
     }
+    copyIntArr(newArr, oldArr, numOfInts-1);
     newArr[numOfInts-1] = newInteger;
     newArr[numOfInts] = NON_ID;
-    copyIntArr(newArr, oldArr, numOfInts-1);
     if (oldArr != NULL) {
         free(oldArr);
     }
@@ -316,8 +313,8 @@ int calculateASCIIDifference(char* str1, char* str2) {
 void hackEnrollment(EnrollmentSystem sys, FILE* out) {
     IsraeliQueueError functionsAdded = modifyIsraeliQueuesInSystem(sys); //note - check if returns error
     IsraeliQueueError hackersEnqueued = enqueueHackers(sys); //note - check if returns error
-    assert(functionsAdded==ISRAELIQUEUE_SUCCESS);
-    assert(hackersEnqueued==ISRAELIQUEUE_SUCCESS);
+    if(hackersEnqueued!=ISRAELIQUEUE_SUCCESS||functionsAdded!=ISRAELIQUEUE_SUCCESS)
+        return;
     Student sadHacker = checkPlacementOfHackers(sys); //hacker who did not get demands
     if (sadHacker == NULL) { //success
         printQueuesIntoFile(sys, out);
@@ -584,7 +581,7 @@ char* stringToLower(char* string)
 
 EnrollmentSystem lowerCase(EnrollmentSystem sys)
 {
-    for(int i =0;sys->studentsArr[i]>0;i++){
+    for(int i =0;sys->studentsArr[i]!=NULL;i++){
         sys->studentsArr[i]->name=stringToLower(sys->studentsArr[i]->name);
         sys->studentsArr[i]->surname= stringToLower(sys->studentsArr[i]->surname);
     }
@@ -600,26 +597,18 @@ EnrollmentSystem readEnrollment(EnrollmentSystem sys, FILE* queues)
         if(sys_course==NULL) {
             return NULL;
         } //look at this!!
-        FriendshipFunction* friendshipFuncArr=(FriendshipFunction*)malloc(sizeof(FriendshipFunction));
-        if(friendshipFuncArr==NULL){
-            return NULL;
-        } //look at this!!!!
-        friendshipFuncArr[0]=NULL;
-        IsraeliQueue courseQueue = IsraeliQueueCreate(friendshipFuncArr,compareStudents,
-                                                      STUDENTS_FRIENDS_THRESHOLD,STUDENTS_RIVALS_THRESHOLD);
-        free(friendshipFuncArr);
+
         int* courseStudentsIDs = updateArrOfInts(queues);
         if (courseStudentsIDs==NULL) {
             continue;
         }
         for(int i =0;courseStudentsIDs[i]>0;i++) {
             Student s = searchStudent(sys->studentsArr, courseStudentsIDs[i]);
-            IsraeliQueueError error = IsraeliQueueEnqueue(courseQueue, s);
+            IsraeliQueueError error = IsraeliQueueEnqueue(sys_course->queue, s); //now the queue is w\o friendship func
             if (error != ISRAELIQUEUE_SUCCESS) {
                 free(courseStudentsIDs);
                 return NULL;
             }
-            sys_course->queue=courseQueue; //queue of course
         }
         free(courseStudentsIDs);
     }
